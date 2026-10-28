@@ -29,7 +29,7 @@ Last updated: 2026-10-28
 - The CRM is a mock; no real CRM (HubSpot, Pipedrive, Salesforce) is connected.
 - Scoring rules are examples, not tuned on real data. Duplicate detection is exact (email / phone only).
 - Retries need `php artisan schedule:work` or a cron entry.
-- The n8n failure/retry branch was not exercised inside n8n. The Dockerfile / Render config were never built.
+- The n8n failure/retry branch was not exercised inside n8n. The Dockerfile / Render config were built and run on Render (free plan); demo login and all main pages checked live.
 - Slack and email are simulated (outbox only).
 - No demo video, no password reset, single workspace.
 

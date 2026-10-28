@@ -22,7 +22,7 @@ For a showcase link in a proposal or portfolio item. Not a production setup.
 - The free plan sleeps after about 15 minutes idle; the next visit takes around a minute.
 - SQLite lives inside the container, so data is lost on restart (the demo resets anyway).
 - It runs `php artisan serve` (single process): fine for someone clicking around, not for load.
-- **The Docker setup has not been built or run by the author** (no Docker on the build machine). The application behaviour is covered by tests (`PublicDemoTest`, `DemoResetTest`), but the first Render build may need a small fix; check the build log.
+- **Verified on Render (free plan, 2026-10-29).** The image built and the demo ran: one-click login, dashboard, leads, owners, scoring, sources, deliveries, mock CRM and outbox all returned 200. No Docker on the build machine, so the image was built by Render, not locally. Free instances sleep after about 15 minutes and take around a minute to wake.
 - A public webhook endpoint exists on the demo. Its sources use the published `whsec_demo_*` secrets, so anyone can post synthetic leads to it. That is acceptable for a demo that resets daily; do not put real data in it.
 
 ## Alternative
