@@ -1,0 +1,48 @@
+Routewise browser end-to-end run (2026-10-28T06:21:42.589Z)
+Target: http://127.0.0.1:8010 on a freshly seeded database
+
+PASS  login page renders the product headline
+PASS  wrong password shows an error and stays on login
+PASS  admin signs in and lands on the dashboard
+PASS  dashboard shows four KPI cards
+PASS  lead-flow chart draws bars
+PASS  sidebar shows 4 leads needing attention
+PASS  sources page lists the webhook sources
+PASS  the signing secret is not in the page
+PASS  Send test lead goes through the signed public endpoint (201)
+PASS  the test lead opens with its detail page
+PASS  the score breakdown lists the rules that fired
+PASS  the timeline records received, scored, routed and synced
+PASS  the lead reached the CRM
+PASS  a request signed with the wrong secret is refused (401)
+PASS  a correctly signed request is accepted (201, tier hot)
+PASS  the same external_id returns the original lead (idempotent)
+PASS  a payload without email or phone is refused (422)
+PASS  rejected deliveries are listed in the delivery log
+PASS  the failure simulator accepts a 429 for the next request
+PASS  while the CRM answers 429 the lead is stored and a retry is scheduled
+PASS  the Retrying tab lists the waiting leads
+PASS  the lead page explains the retry state
+PASS  Retry CRM sync saves the lead once the CRM is healthy
+PASS  a permanent CRM rejection goes straight to Needs attention (no retry)
+PASS  a dead lead shows a clear red banner with the reason
+PASS  Re-score recalculates and reports the score
+PASS  Mark as spam asks for confirmation, then flags the lead
+PASS  search finds leads by name
+PASS  the tier filter works
+PASS  the scoring simulator updates live (75 to 50 after switching to a personal email)
+PASS  an admin can add an owner (regions are normalised to JP, KR)
+PASS  rotating a secret reveals the new one once
+PASS  the old secret stops working at once and the new one works
+PASS  the revealed secret is gone after leaving the page
+PASS  an agent sees owners read-only
+PASS  an agent cannot create sources (HTTP 419)
+PASS  an agent cannot rotate secrets
+PASS  an agent can still retry a CRM sync
+PASS  on a phone the sidebar is hidden behind a menu button
+PASS  the menu button opens the sidebar
+PASS  no sideways page scroll on the leads page at 390px (overflow 0px)
+PASS  no sideways page scroll on the dashboard at 390px (overflow 0px)
+PASS  no JavaScript errors in any page
+
+43/43 checks passed

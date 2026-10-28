@@ -1,0 +1,123 @@
+{
+  "id": "RwFormIntake0001",
+  "name": "Routewise: website form to signed lead webhook",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-form",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0001-4a00-9000-000000000001",
+      "name": "Form submitted (Webhook)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "routewise-lead-form"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Map the form fields to the Routewise lead shape and prepare the exact string that will be signed.\nconst f = $input.first().json.body ?? {};\nconst yes = (v) => v === true || ['true', 'yes', 'on', '1'].includes(String(v).toLowerCase());\n\nconst payload = {\n  name: f.name,\n  email: f.email,\n  phone: f.phone,\n  company: f.company,\n  job_title: f.job_title ?? f.title,\n  country: f.country,\n  message: f.message,\n  consent: f.consent === undefined ? undefined : yes(f.consent),\n  // A stable id makes retries safe: Routewise returns the same lead instead of creating a second one.\n  external_id: f.submission_id ?? `n8n-${$execution.id}`,\n};\nfor (const k of Object.keys(payload)) if (payload[k] === undefined || payload[k] === '') delete payload[k];\n\nconst body = JSON.stringify(payload);\nconst t = Math.floor(Date.now() / 1000);\nreturn [{ json: { body, t, toSign: `${t}.${body}` } }];"
+      },
+      "id": "a1b2c3d4-0002-4a00-9000-000000000002",
+      "name": "Build payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "action": "hmac",
+        "type": "SHA256",
+        "value": "={{ $json.toSign }}",
+        "dataPropertyName": "v1",
+        "secret": "={{ $env.ROUTEWISE_SECRET }}",
+        "encoding": "hex"
+      },
+      "id": "a1b2c3d4-0003-4a00-9000-000000000003",
+      "name": "Sign (HMAC-SHA256)",
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 1,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.ROUTEWISE_URL }}/api/v1/webhooks/{{ $env.ROUTEWISE_SOURCE || 'website' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-Routewise-Signature", "value": "=t={{ $json.t }},v1={{ $json.v1 }}" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.body }}",
+        "options": {
+          "response": { "response": { "fullResponse": true } },
+          "timeout": 15000
+        }
+      },
+      "id": "a1b2c3d4-0004-4a00-9000-000000000004",
+      "name": "POST to Routewise",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [960, 300],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, lead: $json.body.id, status: $json.body.status, tier: $json.body.tier }) }}",
+        "options": { "responseCode": 200 }
+      },
+      "id": "a1b2c3d4-0005-4a00-9000-000000000005",
+      "name": "Respond OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1200, 220]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: false, error: 'lead_not_delivered' }) }}",
+        "options": { "responseCode": 502 }
+      },
+      "id": "a1b2c3d4-0006-4a00-9000-000000000006",
+      "name": "Respond failed",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1200, 400]
+    },
+    {
+      "parameters": {
+        "content": "## Setup\n1. Set these environment variables on the n8n instance: `ROUTEWISE_URL` (for example https://your-app.example), `ROUTEWISE_SECRET` (the source's signing secret), optional `ROUTEWISE_SOURCE` (default `website`).\n2. n8n 2.x blocks `$env` access in nodes by default: set `N8N_BLOCK_ENV_ACCESS_IN_NODE=false`, or replace `$env.*` with n8n Variables or a credential.\n3. Point your form at this workflow's production webhook URL.\n\nThe HTTP node retries 3 times (2 s apart). Retries are safe because every payload carries an `external_id`.",
+        "height": 260,
+        "width": 420
+      },
+      "id": "a1b2c3d4-0007-4a00-9000-000000000007",
+      "name": "Setup notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [240, 60]
+    }
+  ],
+  "connections": {
+    "Form submitted (Webhook)": { "main": [[{ "node": "Build payload", "type": "main", "index": 0 }]] },
+    "Build payload": { "main": [[{ "node": "Sign (HMAC-SHA256)", "type": "main", "index": 0 }]] },
+    "Sign (HMAC-SHA256)": { "main": [[{ "node": "POST to Routewise", "type": "main", "index": 0 }]] },
+    "POST to Routewise": {
+      "main": [
+        [{ "node": "Respond OK", "type": "main", "index": 0 }],
+        [{ "node": "Respond failed", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "pinData": {}
+}

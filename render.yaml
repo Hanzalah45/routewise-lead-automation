@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: routewise-demo
+    runtime: docker
+    plan: free
+    healthCheckPath: /up
+    envVars:
+      - key: ROUTEWISE_PUBLIC_DEMO
+        value: "true"
+      - key: APP_NAME
+        value: Routewise
